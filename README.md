@@ -10,7 +10,8 @@ Tuoni external listener libraries, examples and templates. This repostiory can b
 *  ___templates_samples___ - Examples of custom listeners and agents
     * ___external_http___ - Example HTTP listener and its agents
         * ___agent_dotnet___ - Example HTTP agent written in C#
-        * ___agent_pythont___ - Example HTTP agent written in C#
+        * ___agent_python___ - Example HTTP agent written in Python
+        * ___agent_powershell___ - Example HTTP agent written in Powershell
         * __external_http_template.py__ - Example HTTP listener implemented in python (relays data between its agents and Tuoni)
 
 
