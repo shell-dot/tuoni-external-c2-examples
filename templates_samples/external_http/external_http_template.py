@@ -19,7 +19,7 @@ list_of_commands = {
         {
             "sleep": { "default": 1, "required": True, "type": "string" }
         },
-        "agent_types": ["python", "dotNET"]
+        "agent_types": ["python", "dotNET", "powershell"]
     },
     "my_terminal": 
     {
@@ -28,13 +28,13 @@ list_of_commands = {
         {
             "command": { "default": "whoami", "required": True, "type": "string" }
         },
-        "agent_types": ["python", "dotNET"]
+        "agent_types": ["python", "dotNET", "powershell"]
     },
     "my_what": 
     {
         "description": "Give info about the agent",
         "parameters": {},
-        "agent_types": ["python", "dotNET"]
+        "agent_types": ["python", "dotNET", "powershell"]
     },
     "my_eval": 
     {
@@ -43,7 +43,7 @@ list_of_commands = {
         {
             "code": { "default": "print('TEST')", "required": True, "type": "string" }
         },
-        "agent_types": ["python"]
+        "agent_types": ["python", "powershell"]
     }
 }
 
