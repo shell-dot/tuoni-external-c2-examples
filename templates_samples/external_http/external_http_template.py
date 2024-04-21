@@ -174,12 +174,21 @@ class MyServer(BaseHTTPRequestHandler):
         self.wfile.write(bytes(json.dumps(command.getDict()), "utf-8"))
         
 
-if len(sys.argv) != 5:
+if len(sys.argv) < 3 or len(sys.argv) > 5:
     print("Wrong syntax!")
-    print("%s <external listener hostname/IP> <external listener port> <HTTP interface for listening> <HTTP port>" % sys.argv[0])
+    print("%s <external listener hostname/IP> <external listener port> {HTTP interface for listening, default 0.0.0.0} {HTTP port, default 80}" % sys.argv[0])
     exit()
+   
+ext_host = sys.argv[1]
+ext_port = int(sys.argv[2])
+my_interface =  "0.0.0.0"
+my_port = 80
+if len(sys.argv) >= 4:
+    my_interface = sys.argv[3]
+if len(sys.argv) == 5:
+    my_port = int(sys.argv[4])
     
 controller = Controller()
-controller.connect(sys.argv[1], int(sys.argv[2]))
-myServer = HTTPServer((sys.argv[3], int(sys.argv[4])), MyServer)
+controller.connect(ext_host, ext_port)
+myServer = HTTPServer((my_interface, my_port), MyServer)
 myServer.serve_forever()
