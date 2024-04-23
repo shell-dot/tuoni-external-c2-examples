@@ -35,7 +35,7 @@ class MetasploitProxy:
 		return str(guid)
 
 	def new_command_arrived(self, guid, cmd_type, command_id, conf):
-		if cmd_type == "info":
+		if cmd_type == "info" and guid in self.agent_con_infos:
 			self.tuoni.new_result(guid,  command_id, True, result_txt = {"STDOUT": self.agent_con_infos[guid]})
 
 	def reg_new_agent(self, metasploit_info, session):
