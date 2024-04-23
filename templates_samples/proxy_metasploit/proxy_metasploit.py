@@ -47,10 +47,12 @@ class MetasploitProxy:
 			metadata["username"] = session["username"]
 		if "platform" in session:
 			metadata["os"] = session["platform"]
-		if "arch" in session:
+		if "arch" in session and session["arch"].lower() in ["x64","x86"]:
 			metadata["processArch"] = session["arch"]
 		if "info" in session and "@" in session["info"]:
-			metadata["hostname"] = session["info"][session["info"].find("@")+1 : ].strip()
+			tmp = session["info"][session["info"].find("@")+1 : ].strip()
+            if " " not in tmp and ":" not in tmp:
+                metadata["hostname"] = tmp
 		if "session_host" in session:
 			metadata["ips"] = session["session_host"]
 		metadata["customProperties"] = {"notes": "TEST"}
