@@ -1,5 +1,12 @@
+try:
+    from external_listener import ExternalListener, ExternalListenerCommands
+except:
+    print("[INFO] external_listener.py file not here, looking from ../../external_listener_lib directory")
+    import sys
+    sys.path.append('../../external_listener_lib')
+    from external_listener import ExternalListener, ExternalListenerCommands
+    print("[INFO]   Jep, there it is")
 from pymetasploit3.msfrpc import MsfRpcClient
-from external_listener import ExternalListener, ExternalListenerCommands
 import uuid
 import time
 import threading
