@@ -1,17 +1,10 @@
-try:
-    from external_listener import ExternalListener, ExternalListenerCommands
-except:
-    print("[INFO] external_listener.py file not here, looking from ../../external_listener_lib directory")
-    import sys
-    sys.path.append('../../external_listener_lib')
-    from external_listener import ExternalListener, ExternalListenerCommands
-    print("[INFO]   Jep, there it is")
 from pymetasploit3.msfrpc import MsfRpcClient
+from external_listener import ExternalListener, ExternalListenerCommands
 import uuid
 import time
 import threading
 
-# You have to run msgrpc loaded on metasploit
+# You have to run msgrpc for connections on metasploit
 # > load msgrpc Pass=yourPassword
 metsaploit_confs = [
 	{"nickname": "my_precious", "hostname": "127.0.0.1", "port": 55552, "key": "yourPassword"}
@@ -21,13 +14,16 @@ tuoni_conf = {"hostname": "127.0.0.1", "port": 12345}
 
 
 
+
 class MetasploitProxy:
 	def __init__(self, metasploit_confs):
 		self.tuoni = ExternalListener()
 		self.metasploit_confs = metasploit_confs
 		self.metasploits = []
 		self.loop_thread = None
-		self.agent_con_infos = {}
+		self.agent_to_metasploit = {}
+		self.agent_to_session = {}
+		self.max_wait_on_command_responses = 60
 
 	def generate_guid(self, input_string):
 		namespace = uuid.NAMESPACE_DNS
@@ -35,13 +31,36 @@ class MetasploitProxy:
 		return str(guid)
 
 	def new_command_arrived(self, guid, cmd_type, command_id, conf):
-		if cmd_type == "info" and guid in self.agent_con_infos:
-			self.tuoni.new_result(guid,  command_id, True, result_txt = {"STDOUT": self.agent_con_infos[guid]})
+		if cmd_type == "info" and guid in self.agent_to_metasploit:
+			self.tuoni.new_result(guid,  command_id, True, result_txt = {"STDOUT": self.agent_to_metasploit[guid].info_str})
+		if cmd_type == "x" and guid in self.agent_to_metasploit and guid in self.agent_to_session:
+			if self.agent_to_metasploit[guid].running_cmd:
+				self.tuoni.new_result(guid,  command_id, True, result_txt = {"STDOUT": "Can't run multiple commands in same time, sorry!"})
+			else:				
+				tmp = threading.Thread(target=self.new_command_exec_thread, args=(guid, cmd_type, command_id, conf))
+				tmp.start()
+		time.sleep(0.1)
 
-	def reg_new_agent(self, metasploit_info, session):
+	def new_command_exec_thread(self, guid, cmd_type, command_id, conf):
+		timeout = self.max_wait_on_command_responses
+		if conf["c"].strip().startswith("cd "):
+			timeout = 1;
+		if self.agent_to_metasploit[guid].running_cmd:
+			self.tuoni.new_result(guid,  command_id, True, result_txt = {"STDOUT": "Can't run multiple commands in same time, sorry!"})
+			return
+		self.agent_to_metasploit[guid].running_cmd = True
+		result = self.agent_to_metasploit[guid].sessions.session(self.agent_to_session[guid]).run_with_output(conf["c"], timeout = timeout, timeout_exception=False)
+		if result is None:
+			result = ""
+		self.tuoni.new_result(guid,  command_id, True, result_txt = {"STDOUT": result})
+		self.agent_to_metasploit[guid].running_cmd = False
+
+	def reg_new_agent(self, session_id, metasploit, session):
 		print("New agent")
 		guid = self.generate_guid(session["uuid"])
-		self.agent_con_infos[guid] = metasploit_info
+		metasploit.running_cmd = False
+		self.agent_to_metasploit[guid] = metasploit
+		self.agent_to_session[guid] = session_id
 		metadata = {}
 		if "username" in session:
 			metadata["username"] = session["username"]
@@ -59,6 +78,7 @@ class MetasploitProxy:
 		self.tuoni.new_agent(guid, metadata = metadata)
 		commands = ExternalListenerCommands()
 		commands.add_command_simple("info", "Info about metasploit server the connection came", {})
+		commands.add_command_simple("x", "Run command in metasploit session", {"c": { "default": "help", "required": True, "type": "string" }})
 		self.tuoni.register_commands(commands, guid)  
 
 	def when_connected(self):
@@ -76,7 +96,7 @@ class MetasploitProxy:
 				sessions = metasploit.sessions.list
 				print("  * Found %d connections" % len(sessions))
 				for session_id in sessions:
-					self.reg_new_agent(metasploit.info_str, sessions[session_id])
+					self.reg_new_agent(session_id, metasploit, sessions[session_id])
 				metasploit.previous_sessions = sessions.copy()
 				metasploit.active = True
 				self.metasploits.append(metasploit)
@@ -101,7 +121,7 @@ class MetasploitProxy:
 					for session_id in sessions:
 						if session_id in metasploit.previous_sessions:
 							continue
-						self.reg_new_agent(metasploit.info_str, sessions[session_id])
+						self.reg_new_agent(session_id, metasploit, sessions[session_id])
 					metasploit.previous_sessions = sessions.copy()
 				except Exception as error:
 					print("Pulling sessions from metasploit failed: " + metasploit.info_str)
