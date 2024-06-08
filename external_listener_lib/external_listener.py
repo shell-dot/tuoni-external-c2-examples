@@ -23,7 +23,7 @@ class ExternalListener:
             guid = data["agentGuid"]
             conf = data["configuration"]
             command_id = data["commandId"]
-            template_id = data["templateId"]
+            template_id = data["templateName"]
             if self.on_command is not None:
                 self.on_command(guid, template_id, command_id, conf)
 
@@ -110,7 +110,7 @@ class ExternalListenerCommands:
         if "type" not in cmd_conf_schema:
             cmd_conf_schema["type"] = "object"
         self.commands.append({
-            "id": cmd_id,
+            "name": cmd_id,
             "description": cmd_desc,
             "defaultConfiguration": cmd_default_conf,
             "configurationSchema": cmd_conf_schema
