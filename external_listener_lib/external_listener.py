@@ -41,10 +41,10 @@ class ExternalListener:
     def running_thread(self):
         self.ws.run_forever(reconnect=5)
         
-    def connect(self, host, ip, on_command = None, on_connect = None):    
+    def connect(self, host, port, on_command = None, on_connect = None):    
         self.on_command = on_command
         self.on_connect = on_connect
-        self.ws = websocket.WebSocketApp("ws://%s:%d/" % (host, ip), on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
+        self.ws = websocket.WebSocketApp("ws://%s:%d/" % (host, port), on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
         self.main_thread = threading.Thread(target=self.running_thread, args=())
         self.main_thread.start()
         
