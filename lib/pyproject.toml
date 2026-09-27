@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tuoni-external"
+version = "0.1.0"
+description = "Python helper library for Tuoni external WebSocket listeners"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "websocket-client>=1.6.0,<2",
+]
+
+[project.optional-dependencies]
+metasploit = [
+    "pymetasploit3>=1.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["tuoni_external*"]
